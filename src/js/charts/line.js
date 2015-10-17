@@ -80,13 +80,16 @@
                 .tension(args.interpolate_tension);
 
             //main area
-            var area = d3.svg.area()
-                .defined(line.defined())
-                .x(args.scalefns.xf)
-                .y0(args.scales.Y.range()[0])
-                .y1(args.scalefns.yf)
-                .interpolate(args.interpolate)
-                .tension(args.interpolate_tension);
+            var area = function(d) { 
+                var fn = d3.svg.area()
+                    .defined(line.defined())
+                    .x(args.scalefns.xf)
+                    .y0(args.scales.Y.range()[0])
+                    .y1(args.scalefns.yf)
+                    .interpolate(args.interpolate)
+                    .tension(args.interpolate_tension)
+                fn(d);
+            }
 
             //confidence band
             var confidence_area;

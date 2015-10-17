@@ -936,16 +936,54 @@ function y_axis(args) {
 
     var g;
 
-    var min_y,
-        max_y;
+    var MAX_SAFE_NUMBER = 9007199254740991;
+    var min_y = MAX_SAFE_NUMBER,
+        max_y = -1 * MAX_SAFE_NUMBER;
 
     args.scalefns.yf = function(di) {
-        return args.scales.Y(di[args.y_accessor]);
+        if (di.y_scale) {
+            return di.y_scale(di[args.y_accessor]);
+        } else {
+            return args.scales.Y(di[args.y_accessor]);
+        }
     };
 
-    var _set = false,
-        gtZeroFilter = function(d) { return d[args.y_accessor] > 0; },
+    var gtZeroFilter = function(d) { return d[args.y_accessor] > 0; },
         mapToY = function(d) { return d[args.y_accessor]; };
+    var rectify_y_scales = args.y_scale_type !== 'log' && args.rectify_y_scales;
+    function Rectifier() {
+        this.series_min_y = MAX_SAFE_NUMBER;
+        this.series_max_y = -1 * MAX_SAFE_NUMBER;
+
+        var conversion_factor = 1;
+        var conversion_adjustment = 0;
+
+        this.init = function() {
+            // Conversion algorithm:
+            //     new_value = (old_value - old_min) * (new_max - new_min) / (old_max - old_min) + min_y
+            //
+            // Pre-compute the conversion factor and adjustment for utilization by the rectify function below.
+            // I believe we should use the same min_y for both old and new, since otherwise we will change the
+            // relative aspect ratio of the data set.
+            conversion_factor = (max_y - min_y) / (this.series_max_y - min_y);
+            conversion_adjustment = min_y - min_y * conversion_factor;
+        }
+        
+        var scale_y_value_to_range = function(value) {
+            return value * conversion_factor + conversion_adjustment;
+        }
+
+        this.scale_y_axis_to_dataset = function(value) {
+            return (value - conversion_adjustment) / conversion_factor;
+        }
+
+        this.rectify = function(value) {
+            var new_value = scale_y_value_to_range(value);
+            return args.scales.Y(new_value);
+        }
+    }
+    var rectifiers = !rectify_y_scales ? null : args.data.map(function() { return new Rectifier() });
+
     for (var i = 0; i < args.data.length; i++) {
         var a = args.data[i];
 
@@ -954,19 +992,35 @@ function y_axis(args) {
             a = a.filter(gtZeroFilter);
         }
 
-        if (a.length > 0) { // get min/max in one pass
-            var extent = d3.extent(a, mapToY);
+        if (a.length > 0) {
+            // get local and global min/max in one pass
+            a.forEach(function(d) {
+                var value = mapToY(d);
+                min_y = Math.min(min_y, value);
+                max_y = Math.max(max_y, value);
+                if (rectify_y_scales) {
+                    rectifiers[i].series_min_y = Math.min(rectifiers[i].series_min_y, value);
+                    rectifiers[i].series_max_y = Math.max(rectifiers[i].series_max_y, value);
+                }
+            });
 
-            if (!_set) {
-                // min_y and max_y haven't been set
-                min_y = extent[0];
-                max_y = extent[1];
-                _set = true;
+            // Build a scaler function that converts this data series to this axis' relative bounds.
+            // Note that this closes over the computed primary-axis values, which are not available
+            // during the first pass of the loop.
+            var y_scale;
+            if (rectify_y_scales) {
+                y_scale = rectifiers[i].rectify;
             } else {
-                min_y = Math.min(extent[0], min_y);
-                max_y = Math.max(extent[1], max_y);
+                y_scale = args.scales.Y;
             }
+
+            // Add the scaler function to the data values. 
+            a.forEach(function(d) { d.y_scale = y_scale; });
         }
+    }
+
+    if (rectify_y_scales) {
+        rectifiers.forEach(function(rectifier) { rectifier.init() });
     }
 
     // the default case is for the y-axis to start at 0, unless we explicitly want it
@@ -1044,6 +1098,7 @@ function y_axis(args) {
         .domain([args.processed.min_y, args.processed.max_y])
         .range([args.height - args.bottom - args.buffer, args.top]);
 
+    var yax_formats;
     var yax_format = args.yax_format;
     if (!yax_format) {
         if (args.format === 'count') {
@@ -1063,6 +1118,19 @@ function y_axis(args) {
             };
         }
     }
+
+    if (rectifiers == null) {
+        yax_formats = [yax_format];
+    } else {
+        if (rectifiers != null) {
+            yax_formats = rectifiers.map(function(rectifier) { 
+                return function(f) { 
+                    var yax = Math.round(rectifier.scale_y_axis_to_dataset(f).toPrecision(3));
+                    return yax_format(yax); 
+                };
+            });
+        }
+    }        
 
     //remove the old y-axis, add new one
     svg.selectAll('.mg-y-axis').remove();
@@ -1175,19 +1243,30 @@ function y_axis(args) {
                 .attr('y1', function(d) { return args.scales.Y(d).toFixed(2); })
                 .attr('y2', function(d) { return args.scales.Y(d).toFixed(2); });
 
-    g.selectAll('.mg-yax-labels')
-        .data(scale_ticks).enter()
-            .append('text')
-                .attr('x', args.left - args.yax_tick_length * 3 / 2)
-                .attr('dx', -3).attr('y', function(d) {
-                    return args.scales.Y(d).toFixed(2);
-                })
-                .attr('dy', '.35em')
-                .attr('text-anchor', 'end')
-                .text(function(d) {
-                    var o = yax_format(d);
-                    return o;
-                });
+    scale_ticks.forEach(function(tick) {
+        var y_pos = args.scales.Y(tick).toFixed(2);
+        var yax_labels = yax_formats.map(function(format) { return format(tick); });
+        if ($.unique(yax_labels).length == 1) { // if they're all the same, just render one of them
+            yax_labels = [yax_labels[0]];
+        }
+        g.selectAll('.mg-yax-labels')
+            .data(yax_labels).enter()
+                .append('text')
+                    .attr('class', function(d, i) {
+                        if (yax_labels.length > 1) { // color-code if we have different values
+                            return 'mg-line' + (yax_labels.length > 1 ? (i+1) : '') + '-legend-color'; 
+                        } else {
+                            return '';
+                        }
+                    })
+                    .attr('x', args.left - args.yax_tick_length * 3 / 2)
+                    .attr('dx', -3).attr('y', y_pos)
+                    .attr('dy', function(d, i) { 
+                        return i + '.35em'; 
+                    })
+                    .attr('text-anchor', 'end')
+                    .text(function(d) { return d; });
+    });
 
     if (args.y_rug) {
         y_rug(args);
@@ -1205,7 +1284,7 @@ function y_axis_categorical(args) {
         .rangeRoundBands([args.height - args.bottom - args.buffer, args.top], args.padding_percentage, args.outer_padding_percentage);
 
     args.scalefns.yf = function(di) {
-        return args.scales.Y(di[args.y_accessor]);
+        args.scales.Y(di[args.y_accessor]);
     };
 
     var svg = mg_get_svg_child_of(args.target);
@@ -2511,13 +2590,16 @@ MG.button_layout = function(target) {
                 .tension(args.interpolate_tension);
 
             //main area
-            var area = d3.svg.area()
-                .defined(line.defined())
-                .x(args.scalefns.xf)
-                .y0(args.scales.Y.range()[0])
-                .y1(args.scalefns.yf)
-                .interpolate(args.interpolate)
-                .tension(args.interpolate_tension);
+            var area = function(d) { 
+                var fn = d3.svg.area()
+                    .defined(line.defined())
+                    .x(args.scalefns.xf)
+                    .y0(args.scales.Y.range()[0])
+                    .y1(args.scalefns.yf)
+                    .interpolate(args.interpolate)
+                    .tension(args.interpolate_tension)
+                fn(d);
+            }
 
             //confidence band
             var confidence_area;
@@ -2836,8 +2918,10 @@ MG.button_layout = function(target) {
                                     var id = (typeof v === 'number')
                                             ? i
                                             : formatter(v);
+
                                     class_string = 'roll_' + id  + ' mg-line' + d.line_id;
-                                    if (args.color === null){
+
+                                    if (args.color === null) {
                                         class_string += ' mg-line' + d.line_id + '-color';
                                     }
                                     return class_string;
@@ -3065,7 +3149,7 @@ MG.button_layout = function(target) {
                           datum[args.x_accessor] <= args.processed.max_x &&
                           datum[args.y_accessor] >= args.processed.min_y &&
                           datum[args.y_accessor] <= args.processed.max_y
-                      ){
+                      ) {
                     var circle = svg.select('circle.mg-line-rollover-circle.mg-line' + datum.line_id)
                             .attr({
                                 'cx': function() {
@@ -3143,9 +3227,9 @@ MG.button_layout = function(target) {
 
                     var formatted_x, formatted_y;
 
-                    var time_rollover_format = function(f, d, accessor, utc){
+                    var time_rollover_format = function(f, d, accessor, utc) {
                         var fd;
-                        if (typeof f === 'string'){
+                        if (typeof f === 'string') {
                             fd = MG.time_format(utc, f)(d[accessor]);
                         } else if (typeof f === 'function') {
                             fd = f(d);
@@ -3155,10 +3239,9 @@ MG.button_layout = function(target) {
                         return fd;
                     }
 
-                    var number_rollover_format = function(f, d, accessor){
+                    var number_rollover_format = function(f, d, accessor) {
                         var fd;
-                        if (typeof f === 'string'){
-                            //fd = d3.format(f)(d[accessor]);
+                        if (typeof f === 'string') {
                             fd = d3.format(f)(d[accessor]);
                         } else if (typeof f === 'function') {
                             fd = f(d);
@@ -3167,9 +3250,8 @@ MG.button_layout = function(target) {
                         }
                         return fd;
                     }
-
              
-                    if (args.y_rollover_format != null){
+                    if (args.y_rollover_format != null) {
                         if (args.aggregate_rollover) formatted_y = '';
                         else formatted_y = number_rollover_format(args.y_rollover_format, d, args.y_accessor);
                     } else {
@@ -3180,7 +3262,7 @@ MG.button_layout = function(target) {
                         else formatted_y = args.y_accessor + ': ' + args.yax_units + num(d[args.y_accessor]);
                     }
 
-                    if (args.x_rollover_format != null){
+                    if (args.x_rollover_format != null) {
                         if (args.time_series) {
                             if (args.aggregate_rollover) formatted_x = time_rollover_format(args.x_rollover_format, d, 'key', args.utc);
                             else                         formatted_x = time_rollover_format(args.x_rollover_format, d, args.x_accessor, args.utc);
@@ -3189,7 +3271,7 @@ MG.button_layout = function(target) {
                     } else {
                         if (args.time_series) {
 
-                            if (args.aggregate_rollover && args.data.length > 1){
+                            if (args.aggregate_rollover && args.data.length > 1) {
                                 var date = new Date(d.key);
                             } else {
                                 var date = new Date(+d[args.x_accessor]);

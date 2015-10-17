@@ -216,27 +216,27 @@
     stroke: none;
 }
 
-.mg-line1-legend-color {
+.mg-line1-legend-color, .mg-y-axis text.mg-line1-legend-color {
     color: #4040e8;
     fill: #4040e8;
 }
 
-.mg-line2-legend-color {
+.mg-line2-legend-color, .mg-y-axis text.mg-line2-legend-color {
     color: #05b378;
     fill: #05b378;
 }
 
-.mg-line3-legend-color {
+.mg-line3-legend-color, .mg-y-axis text.mg-line3-legend-color {
     color: #db4437;
     fill: #db4437;
 }
 
-.mg-line4-legend-color {
+.mg-line4-legend-color, .mg-y-axis text.mg-line4-legend-color {
     color: #f8b128;
     fill: #f8b128;
 }
 
-.mg-line5-legend-color {
+.mg-line5-legend-color, .mg-y-axis text.mg-line5-legend-color {
     color: #5c5c5c;
     fill: #5c5c5c;
 }
