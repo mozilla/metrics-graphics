@@ -121,11 +121,16 @@
                     return args.height;
                 })
                 .attr('opacity', 0)
+                .on('click', this.rolloverClick(args))
                 .on('mouseover', this.rolloverOn(args))
                 .on('mouseout', this.rolloverOff(args))
                 .on('mousemove', this.rolloverMove(args));
 
             return this;
+        };
+
+        this.rolloverClick = function(args) {
+            return args.click;
         };
 
         this.rolloverOn = function(args) {

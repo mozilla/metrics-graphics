@@ -2836,8 +2836,10 @@ MG.button_layout = function(target) {
                                     var id = (typeof v === 'number')
                                             ? i
                                             : formatter(v);
+
                                     class_string = 'roll_' + id  + ' mg-line' + d.line_id;
-                                    if (args.color === null){
+
+                                    if (args.color === null) {
                                         class_string += ' mg-line' + d.line_id + '-color';
                                     }
                                     return class_string;
@@ -3065,7 +3067,7 @@ MG.button_layout = function(target) {
                           datum[args.x_accessor] <= args.processed.max_x &&
                           datum[args.y_accessor] >= args.processed.min_y &&
                           datum[args.y_accessor] <= args.processed.max_y
-                      ){
+                      ) {
                     var circle = svg.select('circle.mg-line-rollover-circle.mg-line' + datum.line_id)
                             .attr({
                                 'cx': function() {
@@ -3143,9 +3145,9 @@ MG.button_layout = function(target) {
 
                     var formatted_x, formatted_y;
 
-                    var time_rollover_format = function(f, d, accessor, utc){
+                    var time_rollover_format = function(f, d, accessor, utc) {
                         var fd;
-                        if (typeof f === 'string'){
+                        if (typeof f === 'string') {
                             fd = MG.time_format(utc, f)(d[accessor]);
                         } else if (typeof f === 'function') {
                             fd = f(d);
@@ -3155,10 +3157,9 @@ MG.button_layout = function(target) {
                         return fd;
                     }
 
-                    var number_rollover_format = function(f, d, accessor){
+                    var number_rollover_format = function(f, d, accessor) {
                         var fd;
-                        if (typeof f === 'string'){
-                            //fd = d3.format(f)(d[accessor]);
+                        if (typeof f === 'string') {
                             fd = d3.format(f)(d[accessor]);
                         } else if (typeof f === 'function') {
                             fd = f(d);
@@ -3167,9 +3168,8 @@ MG.button_layout = function(target) {
                         }
                         return fd;
                     }
-
              
-                    if (args.y_rollover_format != null){
+                    if (args.y_rollover_format != null) {
                         if (args.aggregate_rollover) formatted_y = '';
                         else formatted_y = number_rollover_format(args.y_rollover_format, d, args.y_accessor);
                     } else {
@@ -3180,7 +3180,7 @@ MG.button_layout = function(target) {
                         else formatted_y = args.y_accessor + ': ' + args.yax_units + num(d[args.y_accessor]);
                     }
 
-                    if (args.x_rollover_format != null){
+                    if (args.x_rollover_format != null) {
                         if (args.time_series) {
                             if (args.aggregate_rollover) formatted_x = time_rollover_format(args.x_rollover_format, d, 'key', args.utc);
                             else                         formatted_x = time_rollover_format(args.x_rollover_format, d, args.x_accessor, args.utc);
@@ -3189,7 +3189,7 @@ MG.button_layout = function(target) {
                     } else {
                         if (args.time_series) {
 
-                            if (args.aggregate_rollover && args.data.length > 1){
+                            if (args.aggregate_rollover && args.data.length > 1) {
                                 var date = new Date(d.key);
                             } else {
                                 var date = new Date(+d[args.x_accessor]);
@@ -3499,11 +3499,16 @@ MG.button_layout = function(target) {
                     return args.height;
                 })
                 .attr('opacity', 0)
+                .on('click', this.rolloverClick(args))
                 .on('mouseover', this.rolloverOn(args))
                 .on('mouseout', this.rolloverOff(args))
                 .on('mousemove', this.rolloverMove(args));
 
             return this;
+        };
+
+        this.rolloverClick = function(args) {
+            return args.click;
         };
 
         this.rolloverOn = function(args) {
