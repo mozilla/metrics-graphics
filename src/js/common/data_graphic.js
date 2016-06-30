@@ -45,6 +45,7 @@ MG.data_graphic = function(args) {
     y_scale_type: 'linear',
     max_x: null,
     max_y: null,
+    max_y_floor: null,
     min_x: null,
     min_y: null,                        // if set, y axis starts at an arbitrary value
     min_y_from_data: false,             // if set, y axis will start at minimum value rather than at 0

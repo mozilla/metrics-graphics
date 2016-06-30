@@ -819,7 +819,7 @@ function set_min_max_y (args) {
 
   var my = {};
   my.min = extents[0];
-  my.max = extents[1];
+  my.max = (args.max_y_floor === null) ? extents[1] : Math.max(extents[1], args.max_y_floor);
   // the default case is for the y-axis to start at 0, unless we explicitly want it
   // to start at an arbitrary number or from the data's minimum value
   if (my.min >= 0 && !args.min_y && !args.min_y_from_data) {
