@@ -120,6 +120,9 @@ MG.data_graphic = function(args) {
   if (!args) { args = {}; }
 
   var selected_chart = MG.charts[args.chart_type || defaults.chart_type];
+  // Keep the original area setting around so we can later determine if it was
+  // supplied or if we used the default.
+  args.original_area = args.area;
   merge_with_defaults(args, selected_chart.defaults, defaults);
 
   if (args.list) {

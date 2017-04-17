@@ -49,6 +49,33 @@ test('args.area set to false', function() {
     equal(document.querySelector('.mg-main-area'), null, 'No path for area');
 });
 
+test('with multiple lines, args.area defaults to false', function() {
+    var params = {
+        target: '#qunit-fixture',
+        data: [[{'date': new Date('2014-01-01'), 'value': 12},
+               {'date': new Date('2014-03-01'), 'value': 18}],
+               [{'date': new Date('2014-01-01'), 'value': 120},
+               {'date': new Date('2014-03-01'), 'value': 180}]]
+    };
+
+    MG.data_graphic(params);
+    equal(document.querySelector('.mg-main-area'), null, 'expected no path for area');
+});
+
+test('with multiple lines, args.area can be overridden', function() {
+    var params = {
+        target: '#qunit-fixture',
+        data: [[{'date': new Date('2014-01-01'), 'value': 12},
+               {'date': new Date('2014-03-01'), 'value': 18}],
+               [{'date': new Date('2014-01-01'), 'value': 120},
+               {'date': new Date('2014-03-01'), 'value': 180}]],
+        area: true
+    };
+
+    MG.data_graphic(params);
+    ok(document.querySelector('.mg-main-area'), 'expected a path for area');
+});
+
 // NEEDS TO BE REWRITTEN IN LIGHT OF #614
 // test('A solitary active datapoint exists', function() {
 //     var params = {
