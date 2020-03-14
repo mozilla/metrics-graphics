@@ -287,3 +287,59 @@ test('When 1 data series is empty (out of 2) and missing_is_zero is true, remain
 
     equal(document.querySelectorAll('.mg-main-line').length, 1, 'Line for non-empty data series is still rendered');
 });
+
+//Explores branch 10
+test('y_axis_position set to right', function() {
+    var params = {
+        target: '#qunit-fixture',
+        data: [{'date': new Date('2014-01-01'), 'value': 12},
+               {'date': new Date('2014-03-01'), 'value': 18}],
+        legend: ['US', 'CA'],
+        y_axis_position: 'right'
+    };
+
+    MG.data_graphic(params);
+    equal(document.querySelector('.mg-line-legend-color').getAttribute('text-anchor'), 'end', 'text-anchor is set to "end"');
+});
+
+//Explores branches 5, 8
+test('legend-target is set', function() {
+    var params = {
+        target: '#qunit-fixture',
+        data: [{'date': new Date('2014-01-01'), 'value': 12},
+               {'date': new Date('2014-03-01'), 'value': 18}],
+        legend: ['US', 'CA'],
+        legend_target: '.legend',
+    };
+
+    MG.data_graphic(params);
+    equal(document.querySelector('#qunit-fixture').style.color, "", 'color is not set');
+});
+
+//Explores branch 5 and 7
+test('legend-target and colors are set', function() {
+    var params = {
+        target: '#qunit-fixture',
+        data: [{'date': new Date('2014-01-01'), 'value': 12},
+               {'date': new Date('2014-03-01'), 'value': 18}],
+        legend: ['US', 'CA'],
+        legend_target: '.legend',
+        colors: ['blue', 'rgb(255,100,43)', '#CCCCFF']
+    };
+
+    MG.data_graphic(params);
+    ok(document.querySelector('.mg-line-legend'), "mg-line-legend is added");
+});
+
+//Explores branch 4
+test('legend-target is set to an integer', function() {
+    var params = {
+        target: '#qunit-fixture',
+        data: [{'date': new Date('2014-01-01'), 'value': 12},
+               {'date': new Date('2014-03-01'), 'value': 18}],
+        legend: 2
+    };
+
+    MG.data_graphic(params);
+    ok(document.querySelector('.mg-line-legend'), "mg-line-legend should have been added");
+});

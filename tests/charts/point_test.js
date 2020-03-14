@@ -135,3 +135,37 @@ test('Only one active data point container added on multiple calls to the same t
 
     equal(document.querySelectorAll('.mg-active-datapoint-container').length, 1, 'We only have one mg-active-datapoint-container with points');
 });
+
+
+test('color_accessor set', function() {
+    // Branch 8, 9
+    var params = {
+        target: '#qunit-fixture',
+        data: [{'date': new Date('2014-01-01'), 'value': 12},
+               {'date': new Date('2014-03-01'), 'value': 18}],
+        chart_type: 'point',
+        color_accessor: 'v',
+    };
+
+    MG.data_graphic(params);
+    equal(document.querySelectorAll('.mg-points')[0].children[0].getAttribute("fill"), "rgb(0, 0, 0)" )
+});
+
+// Branch 8, 10, 11
+test('color_accessor set, color set to string', function() {
+    var params = {
+        target: '#qunit-fixture',
+        data: [{'date': new Date('2014-01-01'), 'value': 12, 'cat': 'point'}],
+        chart_type: 'point',
+        color_accessor: 'cat',
+        color_domain: ['red'],
+        color_range: ['red'],
+        color_type: 'category',
+    };
+
+    MG.data_graphic(params);
+    equal(document.querySelectorAll('.mg-points')[0].children[0].getAttribute("fill"), "red" )
+
+});
+
+
