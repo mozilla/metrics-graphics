@@ -15,7 +15,7 @@ MG.convert.date = function(data, accessor, time_format) {
 
 MG.convert.number = function(data, accessor) {
   data = data.map(function(d) {
-    d[accessor] = Number(d[accessor]);
+    d[accessor] = d[accessor] ? Number(d[accessor]) : null;
     return d;
   });
 

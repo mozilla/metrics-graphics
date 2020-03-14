@@ -6,7 +6,7 @@ test('MG.convert.date', function() {
 
     MG.convert.date(data, 'date');
     equal($.type(data[0].date), 'date', 'First date is of type date');
-    equal($.type(data[0].date), 'date', 'Second date is of type date');
+    equal($.type(data[1].date), 'date', 'Second date is of type date');
 });
 
 test('MG.convert.date with an alternative timestamp style', function() {
@@ -15,7 +15,7 @@ test('MG.convert.date with an alternative timestamp style', function() {
 
     MG.convert.date(data, 'date', '%Y-%d-%m');
     equal($.type(data[0].date), 'date', 'First date is of type date');
-    equal($.type(data[0].date), 'date', 'Second date is of type date');
+    equal($.type(data[1].date), 'date', 'Second date is of type date');
 });
 
 test('MG.convert.number', function() {
@@ -24,7 +24,16 @@ test('MG.convert.number', function() {
 
     MG.convert.number(data, 'value');
     equal($.type(data[0].value), 'number', 'First value is a number');
-    equal($.type(data[0].value), 'number', 'Second value is a number');
+    equal($.type(data[1].value), 'number', 'Second value is a number');
+});
+
+test('MG.convert.number with nulls', function() {
+    var data = [{'date': '2014-20-12', 'value': '0'},
+               {'date': '2014-21-12', 'value': null}];
+
+    MG.convert.number(data, 'value');
+    equal($.type(data[0].value), 'number', 'First value is a number');
+    equal($.type(data[1].value), 'null', 'Second value is null');
 });
 
 test('mg_get_svg_child_of', function(){
