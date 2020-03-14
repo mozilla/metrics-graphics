@@ -166,6 +166,9 @@ MG.data_graphic = function(args) {
     args.y_accessor = 1;
   }
 
+  // check if buffer value is less than default value
+  if (args.buffer < 8) { args.buffer = 8; }
+
   // check for deprecated parameters
   for (var key in MG.deprecations) {
     if (args.hasOwnProperty(key)) {
