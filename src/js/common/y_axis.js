@@ -247,7 +247,16 @@ function addNumericalLabels (g, args, axisArgs) {
   var ns = axisArgs.namespace;
   var coords = labelPlacement(args, axisArgs);
   var ticks = args.processed[ns + '_ticks'];
-
+  var right = mg_get_plot_right(args);
+  var left = mg_get_plot_left(args);
+  var initialWidth = (right - left)/ticks.length;
+  var idealNumber = (right - left)/40;
+  if(ns === 'x' && initialWidth < 40) {
+    ticks = ticks.filter(function (tick, index) {
+        console.log(Math.round(ticks.length/idealNumber)+1);
+        return index%(Math.round(ticks.length/idealNumber)+1) === 0;
+    });
+  }
   var labels = g.selectAll('.mg-yax-labels')
     .data(ticks).enter()
     .append('text')
@@ -299,6 +308,16 @@ function addTickLines (g, args, axisArgs) {
   var scale = args.scales[ns.toUpperCase()];
 
   var ticks = args.processed[ns + '_ticks'];
+  var right = mg_get_plot_right(args);
+  var left = mg_get_plot_left(args);
+  var initialWidth = (right - left)/ticks.length;
+  var idealNumber = (right - left)/40;
+  if(ns === 'x' && initialWidth < 40) {
+      ticks = ticks.filter(function (tick, index) {
+          console.log(Math.round(ticks.length/idealNumber)+1);
+          return index%(Math.round(ticks.length/idealNumber)+1) === 0;
+      });
+  }
   var ticksClass = 'mg-' + ns + 'ax-ticks';
   var extendedTicksClass = 'mg-extended-' + ns + 'ax-ticks';
   var extendedTicks = args[ns + '_extended_ticks'];
