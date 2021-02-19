@@ -18,7 +18,7 @@ module.exports = {
   },
   plugins: [new BundleAnalyzerPlugin()],
   output: {
-    filename: 'bundle.js',
+    filename: 'umd/bundle.js',
     path: path.resolve(__dirname, 'dist'),
     library: 'MG',
     libraryTarget: 'umd'
